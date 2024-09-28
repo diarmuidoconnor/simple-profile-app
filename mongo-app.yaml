@@ -1,0 +1,51 @@
+networks:
+   profile-network:
+       external: false
+       name: 'mongo-network2'
+services:
+  app:
+    container_name: profileapp
+    # image: 517039770760.dkr.ecr.eu-west-1.amazonaws.com/myapp:1.0
+    image: profile-app:1.0
+    build: .
+    ports:
+      - 3000:3000
+    environment:
+      - MONGO_PASS=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_HOST=mongodb 
+    networks:
+       - profile-network
+    depends_on:
+      - mongodb
+
+  mongodb:
+    container_name: mongoDB
+    image: mongo:8.0-rc
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+       - profile-network
+    # volumes:
+    #   - /Users/diarmuidoconnor/repos/k8s/profile-app/data:/data/db  
+
+  mongo-express:
+    container_name: express
+    image: mongo-express:1.0-20-alpine3.19
+    restart: always # fixes MongoNetworkError when mongodb is not ready when mongo-express starts
+    ports:
+      - 8080:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    networks:
+       - profile-network
+    depends_on:
+      - mongodb
+
+# volumes:
+#   mongo-data:
+#     driver: local
